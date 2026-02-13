@@ -85,3 +85,32 @@ pytest
 ## License
 
 MIT
+
+## Flight-to-Uber Tasker (New)
+
+This repository now also includes a lightweight `travel_tasker` module that automates airport transportation planning from flight data.
+
+### What it does
+- Reads your upcoming flights from a calendar provider abstraction (ready to wire to Google Calendar APIs).
+- Classifies each flight as **local** or **international** based on country mismatch.
+- Computes recommended airport arrival time:
+  - local: 2 hours before departure
+  - international: 3 hours before departure
+  - adds an extra 30 minutes during rush-hour departure windows
+- Estimates road travel time and calculates Uber pickup time with an additional 15-minute safety buffer.
+- Schedules an **UberX** ride through an Uber provider abstraction.
+
+### UX goal
+You only provide a pickup location; the system derives the rest from flight + policy + transit estimates.
+
+### Run demo CLI
+```bash
+travel-tasker --pickup-location "1600 Amphitheatre Parkway, Mountain View, CA"
+travel-tasker --pickup-location "1600 Amphitheatre Parkway, Mountain View, CA" --dry-run
+```
+
+### Integration notes
+Use concrete provider implementations for production:
+- `CalendarProvider`: Google Calendar API adapter
+- `TransitEstimator`: maps/traffic-time adapter
+- `UberProvider`: Uber scheduling adapter
