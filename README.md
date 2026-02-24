@@ -1,87 +1,100 @@
-# Equity Research Web Scraper
+# Calendar → Uber Leave-By Assistant (MVP)
 
-A command-line tool that gathers comprehensive equity research data for any publicly traded company using its stock ticker symbol.
+## Assumptions and decisions
+- Booking mode is runtime-detected in `UberProvider.detectMode()`: `API_BOOKING` when `UBER_API_ENABLED=true`; otherwise `DEEPLINK_BOOKING` fallback. Both modes require explicit charge approval before action.
+- Push notifications are modeled as preferred channel; email is mandatory fallback and SMS is optional (integration point in notification provider).
+- Google Calendar integration is production-shaped (sync/watch token fields, webhook endpoint, resync path), while provider internals are stubbed for local MVP.
+- Privacy-first storage: event IDs, normalized location, lat/lng, recommendation snapshots, and user settings only.
 
-## Features
+## High-level architecture
 
-- **Company Profile**: Name, sector, industry, description, headquarters, employees, website
-- **Financial Data**: Market cap, P/E ratio, EPS, revenue, profit margins, dividends, balance sheet metrics
-- **Price & Trading**: Current price, 52-week range, volume, moving averages, beta
-- **Analyst Coverage**: Price targets, recommendations, earnings estimates
-- **SEC Filings**: Recent 10-K, 10-Q, and 8-K filings from EDGAR
-- **News**: Latest financial news headlines and summaries
-- **Report Export**: Generate reports in plain text or JSON format
-
-## Data Sources
-
-| Source | Data |
-|---|---|
-| Yahoo Finance (via `yfinance`) | Company profile, financials, price data, analyst estimates |
-| SEC EDGAR | Regulatory filings (10-K, 10-Q, 8-K) |
-| Yahoo Finance RSS | Latest news headlines |
-
-## Installation
-
-```bash
-pip install -e ".[dev]"
+```text
+┌───────────────┐      HTTPS       ┌────────────────────────────┐
+│   Next.js PWA │ ───────────────▶ │ Express API (TypeScript)   │
+│ mobile-first  │ ◀─────────────── │ Auth, Plans, Booking, CRUD │
+└───────┬───────┘                  └────────────┬───────────────┘
+        │                                        │
+        │                                        │
+        │                               ┌────────▼────────┐
+        │                               │ Prisma + Postgres│
+        │                               └────────┬────────┘
+        │                                        │
+        │                               ┌────────▼────────┐
+        │                               │ BullMQ + Redis   │
+        │                               └────────┬────────┘
+        │                                        │
+        │                         ┌──────────────┴───────────────────┐
+        │                         │ Provider Adapters                 │
+        │                         │ GoogleCalendar / Maps / Uber /   │
+        └────────────────────────▶│ Notifications (push/email/SMS)   │
+                                  └───────────────────────────────────┘
 ```
 
-Or install dependencies directly:
-
-```bash
-pip install -r requirements.txt
+```text
+Calendar Sync flow
+Google Calendar watch webhook -> /webhooks/google/calendar
+  -> CalendarProvider.syncEvents(incremental)
+  -> if token invalid => full resync
+  -> Planner recomputes leave_by + request windows
+  -> Notification jobs scheduled
 ```
 
-## Usage
-
-### Basic lookup
-```bash
-python -m equity_research AAPL
+## Repo tree
+```text
+.
+├── apps
+│   ├── api
+│   │   ├── prisma/schema.prisma
+│   │   ├── src/adapters/*
+│   │   ├── src/jobs/queue.ts
+│   │   ├── src/lib/*
+│   │   ├── src/routes/*
+│   │   ├── src/services/plannerService.ts
+│   │   └── src/server.ts
+│   └── web
+│       ├── app/*
+│       ├── components/EventCard.tsx
+│       └── public/manifest.json
+├── packages/core/src/*
+├── docker-compose.yml
+└── .env.example
 ```
 
-### Specify output format
-```bash
-python -m equity_research AAPL --format json
-python -m equity_research AAPL --format text
-```
+## Setup instructions
+1. `npm install`
+2. `docker compose up -d postgres redis`
+3. Set `.env` from `.env.example`.
+4. `npm run prisma:generate -w apps/api`
+5. `npm run prisma:migrate -w apps/api -- --name init`
+6. `npm run dev`
 
-### Save report to file
-```bash
-python -m equity_research AAPL --output report.json --format json
-python -m equity_research AAPL --output report.txt --format text
-```
+## Google Cloud setup
+1. Create project, enable Calendar API.
+2. Configure OAuth consent screen (external), add scopes `calendar.readonly`.
+3. Create OAuth client (Web), redirect URI: `http://localhost:4000/auth/google/callback`.
+4. Set webhook endpoint `http://localhost:4000/webhooks/google/calendar` and verify HTTPS in production.
+5. Store client ID/secret in env.
 
-### Select specific sections
-```bash
-python -m equity_research AAPL --sections profile financials price
-```
+## Uber setup
+1. Create Uber developer app.
+2. If Ride Request API scopes approved, set `UBER_API_ENABLED=true` and credentials.
+3. If unavailable, keep false; app uses deep links (`m.uber.com`) after explicit approval.
 
-Available sections: `profile`, `financials`, `price`, `analysts`, `filings`, `news`
+## Maps setup
+1. Enable Google Maps Directions + Geocoding APIs.
+2. Add `GOOGLE_MAPS_API_KEY`.
 
-## Project Structure
+## Web push + email + optional SMS
+1. Generate VAPID keys, set env vars.
+2. Configure SMTP creds (required fallback channel).
+3. Optional: configure Twilio vars for urgent SMS route.
 
-```
-equity_research/
-├── __init__.py
-├── models.py           # Data models (dataclasses)
-├── scrapers/
-│   ├── __init__.py
-│   ├── base.py         # Abstract base scraper
-│   ├── yahoo_finance.py# Yahoo Finance data via yfinance
-│   ├── sec_edgar.py    # SEC EDGAR filings
-│   └── news.py         # Financial news scraper
-├── aggregator.py       # Orchestrates all scrapers
-├── report.py           # Report generation (text/JSON)
-└── cli.py              # Command-line interface
-```
+## Deploy recommendation (Render)
+- Deploy `apps/api` as web service with managed Postgres + Redis.
+- Deploy `apps/web` as static/web service pointing to API URL.
+- Set same env vars in both services.
+- Enable cron on API for channel renewal and sync backstop polling.
 
-## Development
-
-Run tests:
-```bash
-pytest
-```
-
-## License
-
-MIT
+## Tests
+- Unit tests for leave-by, flight classification, request windows: `packages/core/src/planning.test.ts`.
+- Adapter integration stubs (mocked behavior): `apps/api/test/adapters.test.ts`.
