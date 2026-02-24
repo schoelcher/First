@@ -1,0 +1,13 @@
+{
+  "name": "tasker-mvp",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run -ws build",
+    "dev": "npm run -w @tasker/backend dev",
+    "test": "npm run -w @tasker/backend test"
+  }
+}

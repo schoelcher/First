@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserSettings {
+  userId                     String @id
+  homeBase                   String
+  meetingEarlyMinutes        Int    @default(10)
+  dinnerEarlyMinutes         Int    @default(15)
+  domesticFlightMinutes      Int    @default(90)
+  internationalFlightMinutes Int    @default(180)
+  cushionPercent             Float  @default(0.1)
+  cushionBaseMinutes         Int    @default(5)
+  cushionCapMinutes          Int    @default(20)
+  quietHoursStart            Int    @default(22)
+  quietHoursEnd              Int    @default(7)
+  urgencyThresholdMinutes    Int    @default(45)
+  notificationLeadMinutes    Int    @default(20)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  payload   Json
+  createdAt DateTime @default(now())
+}

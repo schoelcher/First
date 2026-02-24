@@ -1,0 +1,47 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: tasker
+      POSTGRES_USER: tasker
+      POSTGRES_PASSWORD: tasker
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  backend:
+    image: node:20
+    working_dir: /app
+    command: sh -c "npm install && npm run -w @tasker/backend dev"
+    volumes:
+      - ./:/app
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env.example
+    depends_on:
+      - redis
+      - postgres
+
+  web:
+    image: node:20
+    working_dir: /app
+    command: sh -c "npm install && npm run -w @tasker/web dev"
+    volumes:
+      - ./:/app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.example
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

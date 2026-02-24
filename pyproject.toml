@@ -26,6 +26,7 @@ dev = [
 
 [project.scripts]
 equity-research = "equity_research.cli:main"
+travel-tasker = "equity_research.travel_tasker.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
