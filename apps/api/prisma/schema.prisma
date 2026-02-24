@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  homeBase           String
+  homeLat            Float?
+  homeLng            Float?
+  googleAccessToken  String?
+  googleRefreshToken String?
+  googleSyncToken    String?
+  bookingMode        String   @default("DEEPLINK_BOOKING")
+  settingsJson       String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  events             Event[]
+}
+
+model Event {
+  id                String   @id @default(cuid())
+  userId            String
+  providerEventId   String
+  title             String
+  startsAt          DateTime
+  locationName      String?
+  locationLat       Float?
+  locationLng       Float?
+  isVirtual         Boolean  @default(false)
+  status            String   @default("active")
+  leaveByAt         DateTime?
+  arriveByAt        DateTime?
+  recommendationJson String?
+  userOverrideJson  String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, providerEventId])
+}
+
+model NotificationLog {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String?
+  channel   String
+  payload   String
+  sentAt    DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  eventId   String?
+  action    String
+  metadata  String
+  createdAt DateTime @default(now())
+}
