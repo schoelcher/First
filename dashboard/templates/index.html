@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EquityScope – Research Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-slate-900 border-b border-slate-700/60 sticky top-0 z-50">
+    <div class="max-w-[1400px] mx-auto px-4 py-3 flex items-center gap-4 flex-wrap">
+      <h1 class="text-xl font-bold tracking-tight whitespace-nowrap">
+        <span class="text-blue-400">Equity</span><span class="text-slate-300">Scope</span>
+      </h1>
+      <form id="searchForm" class="flex-1 flex gap-2 max-w-lg min-w-[260px]">
+        <input id="tickerInput" type="text" placeholder="Ticker symbol — AAPL, MSFT, NVDA…"
+               autocomplete="off" spellcheck="false"
+               class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white
+                      placeholder-slate-500 focus:outline-none focus:border-blue-500
+                      focus:ring-1 focus:ring-blue-500/40 transition">
+        <button type="submit"
+                class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 px-5 py-2 rounded-lg
+                       font-semibold transition whitespace-nowrap">
+          Research
+        </button>
+      </form>
+      <div id="statusBar" class="text-sm text-slate-400 hidden items-center gap-2">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+        </span>
+        <span id="statusText">Working…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-[1400px] mx-auto px-4 py-6">
+
+    <!-- Welcome -->
+    <div id="welcome" class="text-center py-24">
+      <div class="text-5xl mb-6 opacity-20">&#x1F4CA;</div>
+      <h2 class="text-3xl font-bold text-slate-300 mb-3">Equity Research Dashboard</h2>
+      <p class="text-slate-500 text-lg mb-8 max-w-xl mx-auto">
+        Enter a stock ticker to stream a comprehensive research report — consensus data,
+        insider activity, analyst ratings, multi-source news with sentiment, and Portfolio 123 scores.
+      </p>
+      <div class="text-slate-600 text-xs tracking-wide uppercase">
+        Yahoo Finance &middot; Finviz &middot; SEC EDGAR &middot; OpenInsider &middot;
+        Finnhub &middot; NewsAPI &middot; Alpha Vantage &middot; Reuters &middot; MarketWatch &middot; Portfolio 123
+      </div>
+    </div>
+
+    <!-- Dashboard (shown after first search) -->
+    <div id="dashboard" class="hidden space-y-5">
+
+      <!-- Company header -->
+      <section id="companyHeader" class="card p-6"></section>
+
+      <!-- Row 1: Key Metrics | Analyst Consensus -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <section id="keyMetrics"       class="card p-5"><div class="card-skeleton"></div></section>
+        <section id="analystConsensus" class="card p-5"><div class="card-skeleton"></div></section>
+      </div>
+
+      <!-- Row 2: Valuation | Financials -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <section id="valuation"  class="card p-5"><div class="card-skeleton"></div></section>
+        <section id="financials" class="card p-5"><div class="card-skeleton"></div></section>
+      </div>
+
+      <!-- Row 3: Insider Trading | Short Interest & Ownership -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <section id="insiderTrading" class="card p-5"><div class="card-skeleton"></div></section>
+        <section id="shortInterest"  class="card p-5"><div class="card-skeleton"></div></section>
+      </div>
+
+      <!-- Row 4: Analyst Ratings -->
+      <section id="analystRatings" class="card p-5"><div class="card-skeleton"></div></section>
+
+      <!-- Row 5: Earnings Estimates -->
+      <section id="earningsEstimates" class="card p-5"><div class="card-skeleton"></div></section>
+
+      <!-- Row 6: Portfolio 123 -->
+      <section id="p123Section" class="card p-5"><div class="card-skeleton"></div></section>
+
+      <!-- Row 7: Unified News Feed (full width) -->
+      <section id="newsSection" class="card p-5"><div class="card-skeleton"></div></section>
+
+      <!-- Row 8: SEC Filings -->
+      <section id="secFilings" class="card p-5"><div class="card-skeleton"></div></section>
+
+      <!-- Row 9: Full Finviz Metrics dump -->
+      <section id="allFinviz" class="card p-5"><div class="card-skeleton"></div></section>
+
+    </div>
+  </main>
+
+  <footer class="text-center text-slate-700 text-xs py-8">
+    EquityScope &mdash; local research tool. Data from third-party sources. Not financial advice.
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
